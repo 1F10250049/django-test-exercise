@@ -2,6 +2,7 @@ from django.test import TestCase, Client
 from django.utils import timezone
 from datetime import datetime
 from todo.models import Task
+from django.urls import reverse
 
 
 class TaskModelTestCase(TestCase):
@@ -42,8 +43,26 @@ class TaskModelTestCase(TestCase):
         task.save()
         self.assertFalse(task.is_overdue(current))
 
+def test_detail_get_fail(self):
+        client = Client()
+        response = client.get('/1/')
+        
+        self.assertEqual(response.status_code, 404)
 
 class TodoViewTestCase(TestCase):
+
+    def test_detail_get_success(self):
+        task = Task(title='task1', due_at=timezone.make_aware(datetime(2024, 7, 1)))
+        task.save()
+        client = Client()
+        
+        # reverse を使ってURLを生成するように変更
+        response = client.get(reverse('detail', args=[task.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'todo/detail.html')
+        self.assertEqual(response.context['task'], task)
+
     def test_index_get(self):
         client = Client()
         response = client.get('/')
